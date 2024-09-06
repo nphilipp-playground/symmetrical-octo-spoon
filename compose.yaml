@@ -1,0 +1,38 @@
+name: symmetrical-octo-spoon
+
+services:
+  db:
+    image: quay.io/fedora/postgresql-16
+    command:
+      - sh
+      - -c
+      - sleep 2; run-postgresql
+    environment:
+      - POSTGRESQL_USER=test
+      - POSTGRESQL_PASSWORD=test
+      - POSTGRESQL_DATABASE=test
+    healthcheck:
+      test:
+        - CMD
+        - psql
+        - -h
+        - localhost
+        - -U
+        - postgres
+        - -d
+        - template1
+        - -c
+        - select datname from pg_database;
+      start_period: 1m
+      start_interval: 1s
+
+  db-consumer:
+    image: quay.io/fedora/postgresql-16
+    command:
+      - psql
+      - postgresql://test:test@db/template1
+      - -c
+      - select datname from pg_database;
+    depends:
+      db:
+        condition: service_healthy
